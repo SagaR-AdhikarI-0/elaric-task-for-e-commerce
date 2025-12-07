@@ -18,7 +18,7 @@ const Card = ({
 }: Props) => {
     return (
         <View style={styles.container}>
-            <Image style={styles.image} source={{ uri: image }} />
+            <Image style={styles.image} source={{ uri: image }} contentFit='cover' />
             <View style={styles.textCintainer}>
                 <Text style={styles.price}> रु {price}</Text>
                 <Text style={styles.brand} numberOfLines={1} ellipsizeMode="tail">{brand} . Regular </Text>

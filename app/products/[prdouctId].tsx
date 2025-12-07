@@ -89,7 +89,7 @@ const SingleProductPage = () => {
                         <Image
                             source={{ uri: product.imageUrl }}
                             style={styles.productImage}
-                            contentFit="cover"
+                            contentFit="contain"
                         />
                     </View>
 
@@ -263,13 +263,13 @@ const styles = StyleSheet.create({
         color: '#6B7280',
     },
     imageContainer: {
-        width: width - 32,
-        height: 400,
+        height: 300,
         backgroundColor: '#FFF',
-        marginHorizontal: 16,
-        marginTop: 20,
-        borderRadius: 20,
+        width: '100%',
         overflow: 'hidden',
+        display: "flex",
+        alignItems: "center",
+        justifyContent: "center"
     },
     productImage: {
         width: '100%',
