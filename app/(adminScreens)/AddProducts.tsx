@@ -1,11 +1,12 @@
 import { Ionicons } from '@expo/vector-icons';
+import { Image } from 'expo-image';
 import * as ImagePicker from 'expo-image-picker';
 import React, { useState } from 'react';
 import {
-    Image,
+    ActivityIndicator,
+    Alert,
     KeyboardAvoidingView,
     Platform,
-    SafeAreaView,
     ScrollView,
     StatusBar,
     StyleSheet,
@@ -14,6 +15,8 @@ import {
     TouchableOpacity,
     View
 } from 'react-native';
+import { SafeAreaView } from 'react-native-safe-area-context';
+import { addProduct } from '../../services/productService';
 
 export default function App() {
     const [image, setImage] = useState<string | null>(null);
@@ -21,22 +24,61 @@ export default function App() {
     const [price, setPrice] = useState('');
     const [category, setCategory] = useState('');
     const [description, setDescription] = useState('');
+    const [loading, setLoading] = useState(false);
 
-    // Function to pick image
     const pickImage = async () => {
-        // No permissions request is necessary for launching the image library
         let result = await ImagePicker.launchImageLibraryAsync({
-            mediaTypes: ImagePicker.MediaTypeOptions.Images,
+            mediaTypes: ["images"],
             allowsEditing: true,
             aspect: [4, 3],
             quality: 1,
         });
-
         if (!result.canceled) {
+            console.log('Selected imageuri', result.assets[0].uri);
             setImage(result.assets[0].uri);
         }
     };
 
+    const handleSaveProduct = async () => {
+        // Validation
+        if (!image || !name || !price || !category || !description) {
+            Alert.alert('Error', 'Please fill all fields and upload an image');
+            return;
+        }
+
+        if (isNaN(parseFloat(price))) {
+            Alert.alert('Error', 'Please enter a valid price');
+            return;
+        }
+
+        try {
+            setLoading(true);
+            const productId = await addProduct(name, price, category, description, image);
+
+            Alert.alert(
+                'Success',
+                'Product added successfully!',
+                [
+                    {
+                        text: 'OK',
+                        onPress: () => {
+                            setImage(null);
+                            setName('');
+                            setPrice('');
+                            setCategory('');
+                            setDescription('');
+                        }
+                    }
+                ]
+            );
+            console.log('Product added with ID:', productId);
+        } catch (error) {
+            Alert.alert('Error', 'Failed to add product. Please try again.');
+            console.error('Error saving product:', error);
+        } finally {
+            setLoading(false);
+        }
+    }
     return (
         <SafeAreaView style={styles.container}>
             <StatusBar barStyle="dark-content" />
@@ -61,17 +103,19 @@ export default function App() {
                     showsVerticalScrollIndicator={false}
                 >
 
-                    {/* 1. IMAGE UPLOAD SECTION (AT THE TOP) */}
+                    {/* image upload ko section */}
                     <View style={styles.section}>
                         <Text style={styles.label}>Product Image</Text>
                         <TouchableOpacity onPress={pickImage} activeOpacity={0.8}>
                             {image ? (
-                                <View style={styles.imagePreviewContainer}>
-                                    <Image source={{ uri: image }} style={styles.imagePreview} />
-                                    <View style={styles.editIconBadge}>
-                                        <Ionicons name="pencil" size={16} color="#FFF" />
-                                    </View>
-                                </View>
+                                <Image
+                                    source={{ uri: image }}
+                                    style={styles.imagePreview}
+                                    contentFit='cover'
+                                    placeholder={null}
+                                    transition={200}
+                                />
+
                             ) : (
                                 <View style={styles.uploadBox}>
                                     <View style={styles.iconCircle}>
@@ -84,10 +128,7 @@ export default function App() {
                         </TouchableOpacity>
                     </View>
 
-                    {/* 2. FORM FIELDS SECTION (BELOW) */}
                     <View style={styles.section}>
-
-                        {/* Product Name */}
                         <View style={styles.inputGroup}>
                             <Text style={styles.label}>Product Name</Text>
                             <TextInput
@@ -99,7 +140,6 @@ export default function App() {
                             />
                         </View>
 
-                        {/* Price & Category Row */}
                         <View style={styles.row}>
                             <View style={[styles.inputGroup, { flex: 1, marginRight: 10 }]}>
                                 <Text style={styles.label}>Price ($)</Text>
@@ -115,13 +155,14 @@ export default function App() {
 
                             <View style={[styles.inputGroup, { flex: 1, marginLeft: 10 }]}>
                                 <Text style={styles.label}>Category</Text>
-                                {/* Simulating a Dropdown trigger */}
-                                <TouchableOpacity style={styles.dropdownInput}>
-                                    <Text style={category ? styles.inputText : styles.placeholderText}>
-                                        {category || 'Select...'}
-                                    </Text>
-                                    <Ionicons name="chevron-down" size={20} color="#9CA3AF" />
-                                </TouchableOpacity>
+                                <TextInput
+                                    style={styles.input}
+                                    placeholder="Eg: Shoes, Clothing"
+                                    placeholderTextColor="#9CA3AF"
+                                    keyboardType="default"
+                                    value={category}
+                                    onChangeText={setCategory}
+                                />
                             </View>
                         </View>
 
@@ -144,10 +185,17 @@ export default function App() {
 
                 </ScrollView>
 
-                {/* Bottom Action Button */}
                 <View style={styles.footer}>
-                    <TouchableOpacity style={styles.saveButton}>
-                        <Text style={styles.saveButtonText}>Save Product</Text>
+                    <TouchableOpacity
+                        style={[styles.saveButton, loading && styles.saveButtonDisabled]}
+                        onPress={handleSaveProduct}
+                        disabled={loading}
+                    >
+                        {loading ? (
+                            <ActivityIndicator color="#FFFFFF" />
+                        ) : (
+                            <Text style={styles.saveButtonText}>Save Product</Text>
+                        )}
                     </TouchableOpacity>
                 </View>
 
@@ -159,7 +207,7 @@ export default function App() {
 const styles = StyleSheet.create({
     container: {
         flex: 1,
-        backgroundColor: '#F9FAFB', // Very light gray background for modern feel
+        backgroundColor: '#F3F4F6',
     },
     header: {
         flexDirection: 'row',
@@ -167,9 +215,6 @@ const styles = StyleSheet.create({
         justifyContent: 'space-between',
         paddingHorizontal: 20,
         paddingVertical: 15,
-        backgroundColor: '#fff',
-        borderBottomWidth: 1,
-        borderBottomColor: '#F3F4F6',
     },
     headerTitle: {
         fontSize: 18,
@@ -221,10 +266,12 @@ const styles = StyleSheet.create({
     },
     imagePreviewContainer: {
         height: 250,
+        width: '100%',
         borderRadius: 16,
         overflow: 'hidden',
         position: 'relative',
         shadowColor: '#000',
+        backgroundColor: '#b83a3aff',
         shadowOffset: { width: 0, height: 4 },
         shadowOpacity: 0.1,
         shadowRadius: 10,
@@ -232,8 +279,12 @@ const styles = StyleSheet.create({
     },
     imagePreview: {
         width: '100%',
-        height: '100%',
-        resizeMode: 'cover',
+        height: 200,
+        marginVertical: 10,
+        borderRadius: 16,
+        marginBottom: 20,
+        backgroundColor: '#ddeefaff',
+        objectFit: "contain"
     },
     editIconBadge: {
         position: 'absolute',
@@ -306,6 +357,9 @@ const styles = StyleSheet.create({
         shadowOpacity: 0.3,
         shadowRadius: 8,
         elevation: 4,
+    },
+    saveButtonDisabled: {
+        opacity: 0.6,
     },
     saveButtonText: {
         color: '#FFFFFF',

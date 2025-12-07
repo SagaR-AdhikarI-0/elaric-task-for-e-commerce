@@ -1,16 +1,29 @@
 import { Image } from 'expo-image'
 import React from 'react'
-import { StyleSheet, Text, View } from 'react-native'
+import { Dimensions, StyleSheet, Text, View } from 'react-native'
 
-const Card = () => {
+const { width: screenWidth } = Dimensions.get('window')
+const cardWidth = (screenWidth - 60) / 3  // Assuming 20px margin on each side and 20px gap between cards
+type Props = {
+    name: string
+    image: string
+    price: number
+    brand?: string
+}
+const Card = ({
+    name = "EKYBOARD Mechanical Gaming Keyboard, RGB Backlit, USB Wired, Anti-Ghosting, 104 Keys, Black ",
+    image = "https://images.unsplash.com/photo-1607082348824-0a96f2a4b9da?w=800",
+    price = 1000,
+    brand = "Nike",
+}: Props) => {
     return (
-        <View>
-            <View style={styles.imageContainer}>
-                <Image source={require('../../assets/images/react-logo.png')} style={styles.image} />
-            </View>
-            <View >
-                <View style={styles.piceContainer}> <Text style={styles.priceText}> Rs. 1000</Text> <Text style={styles.discountedPriceText}> Rs.1200</Text></View>
-                <Text style={styles.productNameText}>Cap for man </Text>
+        <View style={styles.container}>
+            <Image style={styles.image} source={{ uri: image }} />
+            <View style={styles.textCintainer}>
+                <Text style={styles.price}> रु {price}</Text>
+                <Text style={styles.brand} numberOfLines={1} ellipsizeMode="tail">{brand} . Regular </Text>
+                <Text style={styles.name} numberOfLines={2} ellipsizeMode="tail">{name}</Text>
+
             </View>
         </View>
     )
@@ -19,35 +32,32 @@ const Card = () => {
 export default Card
 
 const styles = StyleSheet.create({
-    imageContainer: {
-        width: 120,
-        height: 120,
-        borderRadius: 20,
-        overflow: 'hidden',
-        backgroundColor: '#ddeefaff',
+    container: {
+        width: cardWidth,
     },
     image: {
-        width: 120,
-        height: 120,
-        resizeMode: 'contain',
+        borderRadius: 12,
+        width: cardWidth,
+        height: cardWidth,
+        backgroundColor: '#f0f0f0',
+        borderWidth: 0.5,
+        borderColor: '#ddd',
     },
-    priceText: {
+    textCintainer: {
+        marginTop: 8,
+    },
+    price: {
         fontSize: 16,
-        fontWeight: 'bold',
-        color: '#333',
+        fontWeight: '700',
     },
-    piceContainer: {
-        flexDirection: 'row',
-        alignItems: 'center',
-    },
-    discountedPriceText: {
-        fontSize: 14,
-        color: '#999',
-        textDecorationLine: 'line-through',
-        marginLeft: 8,
-    },
-    productNameText: {
+    brand: {
         fontSize: 14,
         color: '#666',
+        marginBottom: 4,
     },
+    name: {
+        fontSize: 16,
+        fontWeight: '400',
+        width: cardWidth,
+    }
 })
